@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minesweeperr</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/js/bootstrap.bundle.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: burlywood;
+        }
+
+        .gameBoard {
+            display: inline-block;
+            margin: 20px;
+            background-color: green;
+        }
+
+        .cell {
+            width: 30px;
+            height: 30px;
+            border: 1px solid #ccc;
+            display: inline-block;
+            text-align: center;
+            vertical-align: middle;
+            font-size: 20px;
+            cursor: pointer;
+            background-color: grey;
+            color: #333;
+        }
+
+        .revealed {
+            background-color: #ccc;
+            color: #000;
+        }
+
+        .mine {
+            background-color: #ff3333;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Minesweeper</h1>
+    <div id="gameBoard"></div>
+
+    <div>
+        <h3>Révéler une case</h3>
+        <form id="revealForm">
+            <label for="rowInput">Ligne:</label>
+            <input type="number" id="rowInput" name="rowInput" min="0" max="7" required>
+            <label for="colInput">Colonne:</label>
+            <input type="number" id="colInput" name="colInput" min="0" max="7" required>
+            <button type="submit" class="btn btn-primary">Révéler</button>
+        </form>
+    </div>
+
+    <script>
+        const numRows = 8;
+        const numCols = 8;
+        const numMines = 10;
+
+        const gameBoard = document.getElementById("gameBoard");
+        const revealForm = document.getElementById("revealForm");
+
+        let board = [];
+
+        function initializeBoard() {
+            for (let i = 0; i < numRows; i++) {
+                board[i] = [];
+                for (let j = 0; j < numCols; j++) {
+                    board[i][j] = {
+                        isMine: false,
+                        revealed: false,
+                        count: 0,
+                    };
+                }
+            }
+
+            let minesPlaced = 0;
+            while (minesPlaced < numMines) {
+                const row = Math.floor(Math.random() * numRows);
+                const col = Math.floor(Math.random() * numCols);
+                if (!board[row][col].isMine) {
+                    board[row][col].isMine = true;
+                    minesPlaced++;
+                }
+            }
+
+            for (let i = 0; i < numRows; i++) {
+                for (let j = 0; j < numCols; j++) {
+                    if (!board[i][j].isMine) {
+                        let count = 0;
+                        for (let dx = -1; dx <= 1; dx++) {
+                            for (let dy = -1; dy <= 1; dy++) {
+                                const ni = i + dx;
+                                const nj = j + dy;
+                                if (
+                                    ni >= 0 &&
+                                    ni < numRows &&
+                                    nj >= 0 &&
+                                    nj < numCols &&
+                                    board[ni][nj].isMine
+                                ) {
+                                    count++;
+                                }
+                            }
+                        }
+                        board[i][j].count = count;
+                    }
+                }
+            }
+        }
+
+        function revealCell(row, col) {
+            if (
+                row < 0 ||
+                row >= numRows ||
+                col < 0 ||
+                col >= numCols ||
+                board[row][col].revealed
+            ) {
+                return;
+            }
+
+            board[row][col].revealed = true;
+
+            if (board[row][col].isMine) {
+                alert("Game Over! Vous avez déclenché une mine.");
+            } else if (board[row][col].count === 0) {
+                for (let dx = -1; dx <= 1; dx++) {
+                    for (let dy = -1; dy <= 1; dy++) {
+                        revealCell(row + dx, col + dy);
+                    }
+                }
+            }
+
+            renderBoard();
+        }
+
+        function renderBoard() {
+            gameBoard.innerHTML = "";
+
+            for (let i = 0; i < numRows; i++) {
+                for (let j = 0; j < numCols; j++) {
+                    const cell = document.createElement("div");
+                    cell.className = "cell";
+                    if (board[i][j].revealed) {
+                        cell.classList.add("revealed");
+                        if (board[i][j].isMine) {
+                            cell.classList.add("mine");
+                            cell.textContent = "💣";
+                        } else if (board[i][j].count > 0) {
+                            cell.textContent = board[i][j].count;
+                        }
+                    }
+                    gameBoard.appendChild(cell);
+                }
+                gameBoard.appendChild(document.createElement("br"));
+            }
+        }
+
+        revealForm.addEventListener("submit", (event) => {
+            event.preventDefault();
+            const row = parseInt(document.getElementById("rowInput").value);
+            const col = parseInt(document.getElementById("colInput").value);
+            revealCell(row, col);
+        });
+
+        initializeBoard();
+        renderBoard();
+    </script>
+</body>
+
+</html>
